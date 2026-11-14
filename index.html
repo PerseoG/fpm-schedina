@@ -102,12 +102,14 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
         : status === 'rejected'
           ? 'Giocata rifiutata da FPM. ' + (reason ? 'Motivo del rifiuto: ' + reason : 'Motivo del rifiuto non disponibile.')
           : messages[status];
-      $('status').textContent = status === 'accepted' && ticket_id ? 'Ticket ' + ticket_id : '';
+      const ticketNumber = status === 'accepted' && ticket_id ? ' · Ticket ' + ticket_id : '';
+      $('status').textContent = $('receipt-state').textContent + ticketNumber;
       if (status === 'pending') timer = setTimeout(checkStatus, 8000);
     } catch (_) {
       if (requestedReceipt !== receipt) return;
       delete $('receipt-banner').dataset.state;
       $('receipt-state').textContent = 'Stato temporaneamente non disponibile.';
+      $('status').textContent = $('receipt-state').textContent;
       timer = setTimeout(checkStatus, 8000);
     }
   }
