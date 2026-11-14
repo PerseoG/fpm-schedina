@@ -24,7 +24,7 @@ try {
       ? data.fixtures.map(fixture => [fixture.group, fixture.home, fixture.away])
       : Array.from({length: 13}, () => ['', '—', '']);
     document.getElementById('roundTitle').textContent = data.round
-      ? 'Turno ' + data.round + ' · Giornata ' + data.matchday : 'Anteprima · 13 partite';
+      ? 'Concorso ' + data.round + ' · Giornata ' + data.matchday : 'Anteprima · 13 partite';
     document.querySelector('.control').hidden = true;
     document.querySelector('.intro').hidden = true;
   } else {
@@ -34,7 +34,7 @@ try {
   demoMatches = ticket.fixtures.map(fixture => [fixture.group, fixture.home, fixture.away]);
   document.getElementById('ticketId').textContent = metadata.id;
   document.getElementById('roundTitle').textContent =
-    'Turno ' + metadata.round + ' · Scadenza ' + new Date(metadata.expires).toLocaleString('it-IT', {timeZone: 'Europe/Rome'});
+    'Concorso ' + metadata.round + (metadata.matchday ? ' · Giornata ' + metadata.matchday : '') + ' · Scadenza ' + new Date(metadata.expires).toLocaleString('it-IT', {timeZone: 'Europe/Rome'});
   }
 } catch (_) {
   document.getElementById('status').textContent = 'Apri il link della schedina emesso da FPM.';
