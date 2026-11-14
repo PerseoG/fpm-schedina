@@ -72,12 +72,14 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
   let receipt = localStorage.getItem(key) || localStorage.getItem(previousKey);
   if (receipt) localStorage.setItem(key, receipt);
   let timer;
+  let showReceipt = false;
   const messages = {
     pending: 'Schedina compilata in attesa di accettazione',
     accepted: 'Giocata convalidata da FPM. Orario non registrato per questa ricevuta.',
     rejected: 'Giocata rifiutata da FPM.'
   };
   async function checkStatus() {
+    showReceipt = true;
     clearTimeout(timer);
     $('receipt-banner').hidden = false;
     try {
@@ -138,8 +140,7 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
   };
   $('refresh-status').onclick = checkStatus;
   document.addEventListener('visibilitychange', () => {
-    if (receipt && !document.hidden) checkStatus();
+    if (showReceipt && receipt && !document.hidden) checkStatus();
   });
-  if (receipt) checkStatus();
 }
 </script></body></html>
