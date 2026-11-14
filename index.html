@@ -92,7 +92,7 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
     try {
       const res = await fetch(relay + '/status?receipt=' + encodeURIComponent(receipt), {cache: 'no-store'});
       if (!res.ok) throw new Error();
-      const {status, validated_at, reason, ticket_id} = await res.json();
+      const {status, validated_at, reason, ticket_id, created_at} = await res.json();
       if (requestedReceipt !== receipt) return;
       if (!messages[status]) throw new Error('Stato sconosciuto');
       $('receipt-banner').dataset.state = status;
@@ -102,6 +102,14 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
         : status === 'rejected'
           ? 'Giocata rifiutata da FPM. ' + (reason ? 'Motivo del rifiuto: ' + reason : 'Motivo del rifiuto non disponibile.')
           : messages[status];
+      if (status === 'accepted' && (!time || !Number.isFinite(time.getTime())) && created_at) {
+        const sent = new Date(created_at.replace(' ', 'T') + 'Z');
+        if (Number.isFinite(sent.getTime())) {
+          $('receipt-state').textContent = 'Giocata convalidata da FPM. Inviata il ' +
+            sent.toLocaleDateString('it-IT', {timeZone: 'Europe/Rome'}) + ' alle ore ' +
+            sent.toLocaleTimeString('it-IT', {timeZone: 'Europe/Rome'}) + '.';
+        }
+      }
       const ticketNumber = status === 'accepted' && ticket_id ? ' · Ticket ' + ticket_id : '';
       $('status').textContent = $('receipt-state').textContent + ticketNumber;
       if (status === 'pending') timer = setTimeout(checkStatus, 8000);
