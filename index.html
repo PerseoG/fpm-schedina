@@ -66,12 +66,15 @@ $('copy').onclick=copy;
 render();
 if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
   const relay = ticket.relay.replace(/\/$/, '');
-  const key = 'schedina-receipt-' + ticket.token;
-  let receipt = localStorage.getItem(key);
+  const metadata = decode(ticket.token.split('.')[1]);
+  const previousKey = 'schedina-receipt-' + ticket.token;
+  const key = metadata.shared ? 'schedina-round-receipt-' + metadata.round + '-' + metadata.digest : previousKey;
+  let receipt = localStorage.getItem(key) || localStorage.getItem(previousKey);
+  if (receipt) localStorage.setItem(key, receipt);
   let timer;
   const messages = {
-    pending: 'Schedina inviata · In attesa di convalida',
-    accepted: 'Schedina convalidata',
+    pending: 'Schedina già inviata · In attesa di convalida',
+    accepted: 'Schedina già inviata e convalidata',
     rejected: 'Giocata rifiutata da FPM.'
   };
   async function checkStatus() {
@@ -105,7 +108,10 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
     if (state.some(pick => !pick)) return;
     if (receipt) {
       await checkStatus();
-      if (['pending', 'accepted'].includes($('receipt-banner').dataset.state)) return;
+      if (['pending', 'accepted'].includes($('receipt-banner').dataset.state)) {
+        $('receipt-banner').scrollIntoView({block: 'nearest'});
+        return;
+      }
     }
     clearTimeout(timer);
     const body = ticket.token + '.' + state.join('');
