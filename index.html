@@ -79,6 +79,8 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
     rejected: 'Giocata rifiutata da FPM.'
   };
   async function checkStatus() {
+    if (!receipt) return;
+    const requestedReceipt = receipt;
     showReceipt = true;
     clearTimeout(timer);
     $('receipt-banner').hidden = false;
@@ -86,6 +88,7 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
       const res = await fetch(relay + '/status?receipt=' + encodeURIComponent(receipt), {cache: 'no-store'});
       if (!res.ok) throw new Error();
       const {status, validated_at, reason} = await res.json();
+      if (requestedReceipt !== receipt) return;
       if (!messages[status]) throw new Error('Stato sconosciuto');
       $('receipt-banner').dataset.state = status;
       const time = validated_at ? new Date(validated_at) : null;
@@ -94,9 +97,10 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
         : status === 'rejected'
           ? 'Giocata rifiutata da FPM. ' + (reason ? 'Motivo del rifiuto: ' + reason : 'Motivo del rifiuto non disponibile.')
           : messages[status];
-      $('status').textContent = receipt-state.textContent;
+      $('status').textContent = $('receipt-state').textContent;
       if (status === 'pending') timer = setTimeout(checkStatus, 8000);
     } catch (_) {
+      if (requestedReceipt !== receipt) return;
       delete $('receipt-banner').dataset.state;
       $('receipt-state').textContent = 'Stato temporaneamente non disponibile.';
       timer = setTimeout(checkStatus, 8000);
@@ -113,13 +117,6 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
       return;
     }
     if (state.some(pick => !pick)) return;
-    if (receipt) {
-      await checkStatus();
-      if (['pending', 'accepted'].includes($('receipt-banner').dataset.state)) {
-        $('receipt-banner').scrollIntoView({block: 'nearest'});
-        return;
-      }
-    }
     clearTimeout(timer);
     const body = ticket.token + '.' + state.join('');
     receipt = Array.from(crypto.getRandomValues(new Uint8Array(32)), byte => byte.toString(16).padStart(2, '0')).join('');
