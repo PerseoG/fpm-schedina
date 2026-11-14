@@ -73,7 +73,7 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
   if (receipt) localStorage.setItem(key, receipt);
   let timer;
   const messages = {
-    pending: 'Schedina già inviata · In attesa di convalida',
+    pending: 'Schedina compilata in attesa di accettazione',
     accepted: 'Giocata convalidata',
     rejected: 'Giocata rifiutata da FPM.'
   };
