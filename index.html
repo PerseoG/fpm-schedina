@@ -74,14 +74,14 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
   let timer;
   const messages = {
     pending: 'Schedina compilata in attesa di accettazione',
-    accepted: 'Schedina compilata in attesa di accettazione',
+    accepted: 'Giocata convalidata da FPM. Orario non registrato per questa ricevuta.',
     rejected: 'Giocata rifiutata da FPM.'
   };
   async function checkStatus() {
     clearTimeout(timer);
     $('receipt-banner').hidden = false;
     try {
-      const res = await fetch(relay + '/status?receipt=' + encodeURIComponent(receipt));
+      const res = await fetch(relay + '/status?receipt=' + encodeURIComponent(receipt), {cache: 'no-store'});
       if (!res.ok) throw new Error();
       const {status, validated_at, reason} = await res.json();
       if (!messages[status]) throw new Error('Stato sconosciuto');
@@ -92,7 +92,7 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
         : status === 'rejected'
           ? 'Giocata rifiutata da FPM. ' + (reason ? 'Motivo del rifiuto: ' + reason : 'Motivo del rifiuto non disponibile.')
           : messages[status];
-      $('status').textContent = messages[status];
+      $('status').textContent = receipt-state.textContent;
       if (status === 'pending') timer = setTimeout(checkStatus, 8000);
     } catch (_) {
       delete $('receipt-banner').dataset.state;
