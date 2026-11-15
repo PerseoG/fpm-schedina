@@ -70,6 +70,15 @@ render();
 if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
   const relay = ticket.relay.replace(/\/$/, '');
   const metadata = decode(ticket.token.split('.')[1]);
+  const deadline = Date.parse(metadata.expires);
+  const isClosed = () => !Number.isFinite(deadline) || Date.now() >= deadline;
+  const updateSubmission = () => {
+    $('make').disabled = isClosed() || state.some(pick => !pick);
+  };
+  const matches = $('matches');
+  new MutationObserver(updateSubmission).observe(matches, {childList: true});
+  if (isClosed()) $('status').textContent = 'Giornata non più giocabile. Puoi verificare una giocata già inviata.';
+  updateSubmission();
   const previousKey = 'schedina-receipt-' + ticket.token;
   const key = metadata.shared ? 'schedina-round-receipt-' + metadata.round + '-' + metadata.digest : previousKey;
   const phoneNumber = () => $('phone').value.trim().replace(/[ ()-]/g, '').replace(/^00/, '+');
@@ -125,6 +134,11 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
   $('copy').hidden = true;
   $('make').textContent = 'Invia giocata';
   $('make').onclick = async () => {
+    if (isClosed()) {
+      updateSubmission();
+      $('status').textContent = 'Giornata non più giocabile.';
+      return;
+    }
     const phone = phoneNumber();
     if (!/^\+[1-9][0-9]{6,14}$/.test(phone)) {
       $('status').textContent = 'Inserisci il numero internazionale, per esempio con +39.';
@@ -148,7 +162,7 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
     } catch (_) {
       $('status').textContent = 'Invio non confermato. Riprova.';
     } finally {
-      $('make').disabled = state.some(pick => !pick);
+      updateSubmission();
     }
   };
   $('verify-entry').onclick = () => {
