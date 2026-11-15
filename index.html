@@ -103,6 +103,10 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
       if (!res.ok) throw new Error();
       const {status, validated_at, reason, ticket_id, created_at} = await res.json();
       if (requestedReceipt !== receipt) return;
+      if (status === 'rejected' && /giocata gi[aà] (?:presente|effettuata)/i.test(reason || '')
+          && /^\+[1-9][0-9]{6,14}$/.test(phoneNumber())) {
+        if (await verifyOfficial(true)) return;
+      }
       if (!messages[status]) throw new Error('Stato sconosciuto');
       $('receipt-banner').dataset.state = status;
       const time = validated_at ? new Date(validated_at) : null;
@@ -165,15 +169,14 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
       updateSubmission();
     }
   };
-  $('verify-entry').onclick = verifyOfficial;
-  async function verifyOfficial() {
+  $('verify-entry').onclick = () => verifyOfficial();
+  async function verifyOfficial(acceptedOnly = false) {
     const phone = phoneNumber();
     if (!/^\+[1-9][0-9]{6,14}$/.test(phone)) {
       $('status').textContent = 'Inserisci il numero internazionale, per esempio con +39.';
       return;
     }
     clearTimeout(timer);
-    receipt = null;
     try {
       const response = await fetch(relay + '/verify', {
         method: 'POST', headers: {'Content-Type': 'application/json'},
@@ -181,6 +184,8 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
       });
       if (!response.ok) throw new Error();
       const data = await response.json();
+      if (acceptedOnly && data.status !== "accepted") return false;
+      receipt = null;
       const labels = {
         accepted: 'Giocata convalidata da FPM.',
         pending: 'Schedina compilata in attesa di accettazione.',
@@ -204,7 +209,9 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
         const score = data.matches[index];
         row.querySelector('.group').textContent = score ? score.join(' – ') : 'Risultato in attesa';
       });
+      return true;
     } catch {
+      if (acceptedOnly) return false;
       $('receipt-banner').hidden = true;
       $('status').textContent = 'Verifica non disponibile. Riprova tra poco.';
     }
