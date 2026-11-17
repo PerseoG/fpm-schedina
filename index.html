@@ -111,6 +111,9 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
           && /^\+[1-9][0-9]{6,14}$/.test(phoneNumber())) {
         if (await verifyOfficial(true)) return;
       }
+      if (status === 'accepted' && /^\+[1-9][0-9]{6,14}$/.test(phoneNumber())) {
+        if (await verifyOfficial(true)) return;
+      }
       if (!messages[status]) throw new Error('Stato sconosciuto');
       $('receipt-banner').dataset.state = status;
       const time = validated_at ? new Date(validated_at) : null;
@@ -227,7 +230,10 @@ if (ticket && /^https:\/\/[^/]+/.test(ticket.relay || '') && state.length) {
       $('status').textContent = 'Verifica non disponibile. Riprova tra poco.';
     }
   }
-  $('refresh-status').onclick = () => receipt ? checkStatus() : verifyOfficial();
+  $('refresh-status').onclick = () => {
+    if (/^\+[1-9][0-9]{6,14}$/.test(phoneNumber()) || !receipt) return verifyOfficial();
+    return checkStatus();
+  };
   document.addEventListener('visibilitychange', () => {
     if (showReceipt && receipt && !document.hidden) checkStatus();
   });
